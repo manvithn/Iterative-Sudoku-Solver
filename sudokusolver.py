@@ -75,41 +75,33 @@ BOX_SIZE = 3
 ROW_SIZE = BOX_SIZE * BOX_SIZE
 BOX_ROW = BOX_SIZE * ROW_SIZE
 MATRIX_SIZE = ROW_SIZE * ROW_SIZE
+matrix, binarymatrix, rowset, colset, boxset = [], [], [], [], []
+pmatch = re.compile('^[0-9]$')
+prompt_msg = (
+    "Enter the sudoku puzzle from left to right, top to bottom. Non-empty\n"
+    "entries (boxes with numbers) are represented with the corresponding number\n"
+    "from 1-9. Empty entries (empty boxes) can be represented with the number 0.\n"
+    "All other characters and whitespace will be ignored.\n\n"
+)
 
-def print_matrix(matrix, size):
+def print_matrix(matrix):
     """ Precondition:
-            [size] is a nonnegative integer
-            [matrix] is a list of length [size] * [size]
+            [matrix] is a list of length [ROW_SIZE] * [ROW_SIZE]
         Postcondition:
             Prints [matrix] in a readable format. [matrix] represents a matrix
-            of row length [size].
-    """
-    for i in range(size):
-        ind = i * size
+            of row length [ROW_SIZE]. """
+    for i in range(ROW_SIZE):
+        ind = i * ROW_SIZE
         print("["),
-        for j in range(size - 1):
+        for j in range(ROW_SIZE - 1):
             print(matrix[ind + j]),
             print("|"),
-        print(matrix[ind + size - 1]),
+        print(matrix[ind + ROW_SIZE - 1]),
         print("]")
     print("")
 
-def mark(rowset, colset, boxset, ind, num, val):
-    rowset[ind / ROW_SIZE][num] = val
-    colset[ind % ROW_SIZE][num] = val
-    boxset[BOX_SIZE * (ind / BOX_ROW) + ind % ROW_SIZE / BOX_SIZE][num] = val
-
-def check_conflict(rowset, colset, boxset, ind, num):
-    return (
-        rowset[ind / ROW_SIZE][num] or
-        colset[ind % ROW_SIZE][num] or
-        boxset[BOX_SIZE * (ind / BOX_ROW) + ind % ROW_SIZE / BOX_SIZE][num]
-    )
-
 def initialize():
-    """Creates and initializes the 5 lists as well as the prompt string and
-    regex pattern."""
-    matrix, binarymatrix, rowset, colset, boxset = [], [], [], [], []
+    """ Initializes matrix, binarymatrix, rowset, colset, and boxset. """
     for i in range(MATRIX_SIZE):
         matrix.append(0)
         binarymatrix.append(False)
@@ -122,54 +114,61 @@ def initialize():
         rowset.append(rline)
         colset.append(cline)
         boxset.append(bline)
-    p = re.compile('^[0-9]$')
-    prompt = (
-        "Enter the sudoku puzzle from left to right, top to bottom. Non-empty e"
-        "ntries\n(boxes with numbers) are represented with the corresponding nu"
-        "mber from 1-9.\nEmpty entries (empty boxes) can be represented with th"
-        "e number 0. All other\ncharacters and whitespace will be ignored.\n\n"
-    )
-    return (p, prompt, matrix, binarymatrix, rowset, colset, boxset)
 
-def prompt((p, prompt, matrix, binarymatrix, rowset, colset, boxset)):
-    """Repeatedly prompts the user until a valid sudoku puzzle is inputed. The
-    finalized lists are returned."""
-    puzzle = raw_input(prompt)
-    puzzle = [int(char) for char in puzzle if p.match(char)]
+def mark(ind, num, val):
+    rowset[ind / ROW_SIZE][num] = val
+    colset[ind % ROW_SIZE][num] = val
+    boxset[BOX_SIZE * (ind / BOX_ROW) + ind % ROW_SIZE / BOX_SIZE][num] = val
+
+def check_conflict(ind, num):
+    return (
+        rowset[ind / ROW_SIZE][num] or
+        colset[ind % ROW_SIZE][num] or
+        boxset[BOX_SIZE * (ind / BOX_ROW) + ind % ROW_SIZE / BOX_SIZE][num]
+    )
+
+def prompt():
+    """ Repeatedly prompts the user until a valid sudoku puzzle is inputed. The
+    finalized lists are returned. """
+    puzzle = raw_input(prompt_msg)
+    puzzle = [int(char) for char in puzzle if pmatch.match(char)]
     if len(puzzle) > MATRIX_SIZE:
+        print_matrix(puzzle)
         print "Too many digits were passed. Please reenter the puzzle."
-        return prompt((p, prompt, matrix, binarymatrix, rowset, colset, boxset))
+        prompt()
     if len(puzzle) < MATRIX_SIZE:
+        print_matrix(puzzle)
         print "Too few digits were passed. Please reenter the puzzle."
-        return prompt((p, prompt, matrix, binarymatrix, rowset, colset, boxset))
+        prompt()
     for (i, num) in enumerate(puzzle):
         if num != 0:
             matrix[i] = num
             binarymatrix[i] = True
-            mark(rowset, colset, boxset, i, num, True)
-    return (matrix, binarymatrix, rowset, colset, boxset)
+            mark(i, num, True)
 
-def backtrack_solve((matrix, binarymatrix, rowset, colset, boxset)):
-    """Returns the solved sudoku puzzle as a list of the form [matrix]."""
+def backtrack_solve():
+    """ Returns the solved sudoku puzzle as a list of the form [matrix]. """
     i, n = 0, 1
     while i < MATRIX_SIZE:
         if binarymatrix[i]:
             i += 1
             continue
-        while n < 10 and check_conflict(rowset, colset, boxset, i, n):
+        while n < 10 and check_conflict(i, n):
             n += 1
         if n == 10:
             i -= 1
             while binarymatrix[i]:
                 i -= 1
             n = matrix[i]
-            mark(rowset, colset, boxset, i, n, False)
+            mark(i, n, False)
             n += 1
         else:
             matrix[i] = n
-            mark(rowset, colset, boxset, i, n, True)
+            mark(i, n, True)
             i += 1
             n = 1
-    return matrix
 
-print_matrix(backtrack_solve(prompt(initialize())), ROW_SIZE)
+initialize()
+prompt()
+backtrack_solve()
+print_matrix(matrix)
