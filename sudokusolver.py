@@ -5,7 +5,7 @@ import re
 #
 # matrix - [matrix] is a list of length 81 where [matrix[i]] corresponds to the
 # number on the sudoku puzzle in the ith position (the mapping of indices to
-# positions is depicted below). An blank spot in the puzzle is represented by a
+# positions is depicted below). A blank spot in the puzzle is represented by a
 # [0] and the [0]s will gradually be replaced with other numbers as the
 # algorithm solves the puzzle.
 #
@@ -168,7 +168,11 @@ def backtrack_solve():
             i += 1
             n = 1
 
-initialize()
-prompt()
-backtrack_solve()
-print_matrix(matrix)
+def main():
+    initialize()
+    prompt()
+    backtrack_solve()
+    print_matrix(matrix)
+
+if __name__ == "__main__":
+    main()
