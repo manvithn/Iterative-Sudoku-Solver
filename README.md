@@ -1,1 +1,1 @@
-# Iterative-Sudoku-Solver
+# Sudoku-Solvers
